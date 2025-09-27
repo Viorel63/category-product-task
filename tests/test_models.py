@@ -1,5 +1,10 @@
 ﻿import pytest
-from models import Product, Category, CategoryIterator
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from src.models import Product, Category, CategoryIterator
 
 
 @pytest.fixture
@@ -37,11 +42,45 @@ def test_product_creation():
     assert new.price == 5500.0  # Выбрана большая цена
 
 
-def test_add_product(sample_category, sample_product):
+def test_add_product(sample_category):
     """Проверка добавления товара в категорию"""
-    sample_category.add_product(sample_product)
-    assert "Телефон" in sample_category.products
-    assert sample_product in sample_category._Category__products
+    # Создаем товар с УНИКАЛЬНЫМ именем, которого нет в категории
+    new_product = Product("Планшет", "Графический планшет", 30000.0, 3)
+
+    initial_count = len(sample_category._Category__products)
+    sample_category.add_product(new_product)
+
+    # Проверяем что товар добавился в список
+    assert len(sample_category._Category__products) == initial_count + 1
+
+    # Проверяем что товар есть в строковом представлении
+    assert "Планшет" in sample_category.products
+
+    # Проверяем что последний добавленный товар имеет правильное имя
+    assert sample_category._Category__products[-1].name == "Планшет"
+
+
+def test_add_duplicate_product(sample_category):
+    """Тест добавления дубликата товара"""
+    # Добавляем товар с существующим именем "Телефон"
+    initial_product_count = len(sample_category._Category__products)
+    initial_total_quantity = len(sample_category)
+
+    duplicate_product = Product("Телефон", "Новая модель", 60000.0, 3)
+    sample_category.add_product(duplicate_product)
+
+    # Количество товаров в списке не должно измениться (дубликат не добавляется)
+    assert len(sample_category._Category__products) == initial_product_count
+
+    # Общее количество товаров должно увеличиться
+    assert len(sample_category) == initial_total_quantity + 3  # 15 + 3 = 18
+
+    # Цена должна обновиться до максимальной
+    for product in sample_category._Category__products:
+        if product.name == "Телефон":
+            assert product.price == 60000.0
+            assert product.quantity == 13  # 10 + 3
+            break
 
 
 def test_product_str(sample_product):
