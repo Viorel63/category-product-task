@@ -2,26 +2,22 @@
     def __init__(self, name: str, description: str, price: float, quantity: int):
         self.name = name
         self.description = description
-        self._price = price  # Защищенный атрибут
+        self._price = price
         self.quantity = quantity
 
     def __str__(self) -> str:
-        """Строковое представление для задания 1"""
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     def __add__(self, other) -> float:
-        """Сложение продуктов для задания 2"""
-        if not isinstance(other, Product):
-            raise TypeError("Можно складывать только объекты класса Product")
+        if type(other) is not type(self):
+            raise TypeError("Можно складывать только товары одного класса")
         return self.price * self.quantity + other.price * other.quantity
 
     def __len__(self) -> int:
-        """Возвращает количество товара на складе"""
         return self.quantity
 
     @classmethod
     def create_product(cls, name: str, description: str, price: float, quantity: int, products: list = None):
-        """Создает товар с проверкой дубликатов"""
         if products:
             for product in products:
                 if product.name == name:
@@ -33,16 +29,41 @@
 
     @property
     def price(self):
-        """Геттер для цены"""
         return self._price
 
     @price.setter
     def price(self, value):
-        """Сеттер для цены с проверкой"""
         if value <= 0:
             print("Цена введена некорректная")
         else:
             self._price = value
+
+
+class Smartphone(Product):
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 performance: str, model: str, storage: int, color: str):
+        super().__init__(name, description, price, quantity)
+        self.performance = performance  # производительность
+        self.model = model  # модель
+        self.storage = storage  # объем встроенной памяти
+        self.color = color  # цвет
+
+    def __str__(self) -> str:
+        return (f"{self.name} ({self.model}), {self.price} руб. Остаток: {self.quantity} шт.\n"
+                f"Характеристики: {self.performance}, {self.storage}GB, {self.color}")
+
+
+class LawnGrass(Product):
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 country: str, germination_period: int, color: str):
+        super().__init__(name, description, price, quantity)
+        self.country = country  # страна-производитель
+        self.germination_period = germination_period  # срок прорастания (в днях)
+        self.color = color  # цвет
+
+    def __str__(self) -> str:
+        return (f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт.\n"
+                f"Производитель: {self.country}, прорастание: {self.germination_period} дней, цвет: {self.color}")
 
 
 class Category:
@@ -57,21 +78,17 @@ class Category:
         Category.total_unique_products = len(set(self.__products))
 
     def __str__(self) -> str:
-        """Строковое представление для задания 1"""
         total_quantity = sum(product.quantity for product in self.__products)
         return f"{self.name}, количество продуктов: {total_quantity} шт."
 
     def __len__(self) -> int:
-        """Возвращает общее количество товаров в категории"""
         return sum(product.quantity for product in self.__products)
 
     def __iter__(self):
-        """Итератор для дополнительного задания"""
         self._current_index = 0
         return self
 
     def __next__(self):
-        """Возвращает следующий товар в категории"""
         if self._current_index < len(self.__products):
             product = self.__products[self._current_index]
             self._current_index += 1
@@ -79,24 +96,23 @@ class Category:
         raise StopIteration
 
     def add_product(self, product):
-        """Добавляет товар в категорию"""
-        if isinstance(product, Product):
-            # Проверяем, есть ли уже такой товар
-            for existing_product in self.__products:
-                if existing_product.name == product.name:
-                    existing_product.quantity += product.quantity
-                    if product.price > existing_product.price:
-                        existing_product.price = product.price
-                    return
+        """Добавляет товар в категорию с проверкой типа"""
+        if not isinstance(product, Product):
+            raise TypeError("Можно добавлять только объекты класса Product или его наследников")
 
-            self.__products.append(product)
-            Category.total_unique_products = len(set(self.__products))
-        else:
-            raise TypeError("Можно добавлять только объекты класса Product")
+        # Проверяем, есть ли уже такой товар
+        for existing_product in self.__products:
+            if existing_product.name == product.name:
+                existing_product.quantity += product.quantity
+                if product.price > existing_product.price:
+                    existing_product.price = product.price
+                return
+
+        self.__products.append(product)
+        Category.total_unique_products = len(set(self.__products))
 
     @property
     def products(self):
-        """Возвращает форматированный список товаров"""
         return "\n".join(
             f"{product.name}: {product.price} руб. Остаток: {product.quantity} шт."
             for product in self.__products
@@ -104,8 +120,6 @@ class Category:
 
 
 class CategoryIterator:
-    """Итератор для категории (дополнительное задание)"""
-
     def __init__(self, category):
         self._category = category
         self._index = 0
