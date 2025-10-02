@@ -1,5 +1,44 @@
-﻿class Product:
+﻿from abc import ABC, abstractmethod
+
+
+class ReprMixin:
+    """Миксин для вывода информации о создании объекта"""
+
+    def __repr__(self):
+        attrs = []
+        for attr, value in self.__dict__.items():
+            # Форматируем строковые значения
+            if isinstance(value, str):
+                attrs.append(f"'{value}'")
+            else:
+                attrs.append(str(value))
+
+        class_name = self.__class__.__name__
+        return f"{class_name}({', '.join(attrs)})"
+
+
+class AbstractProduct(ABC):
+    """Абстрактный класс для продуктов"""
+
+    @abstractmethod
     def __init__(self, name: str, description: str, price: float, quantity: int):
+        self.name = name
+        self.description = description
+        self.price = price
+        self.quantity = quantity
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __add__(self, other):
+        pass
+
+
+class Product(AbstractProduct, ReprMixin):
+    def __init__(self, name: str, description: str, price: float, quantity: int):
+        print(f"Создан объект: {self.__class__.__name__}('{name}', '{description}', {price}, {quantity})")
         self.name = name
         self.description = description
         self._price = price
@@ -39,40 +78,64 @@
             self._price = value
 
 
-class Smartphone(Product):
+class Smartphone(Product, ReprMixin):
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  performance: str, model: str, storage: int, color: str):
+        print(f"Создан объект: {self.__class__.__name__}('{name}', '{description}', {price}, {quantity}, "
+              f"'{performance}', '{model}', {storage}, '{color}')")
+
         super().__init__(name, description, price, quantity)
-        self.performance = performance  # производительность
-        self.model = model  # модель
-        self.storage = storage  # объем встроенной памяти
-        self.color = color  # цвет
+        self.performance = performance
+        self.model = model
+        self.storage = storage
+        self.color = color
 
     def __str__(self) -> str:
         return (f"{self.name} ({self.model}), {self.price} руб. Остаток: {self.quantity} шт.\n"
                 f"Характеристики: {self.performance}, {self.storage}GB, {self.color}")
 
 
-class LawnGrass(Product):
+class LawnGrass(Product, ReprMixin):
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  country: str, germination_period: int, color: str):
+        print(f"Создан объект: {self.__class__.__name__}('{name}', '{description}', {price}, {quantity}, "
+              f"'{country}', {germination_period}, '{color}')")
+
         super().__init__(name, description, price, quantity)
-        self.country = country  # страна-производитель
-        self.germination_period = germination_period  # срок прорастания (в днях)
-        self.color = color  # цвет
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
 
     def __str__(self) -> str:
         return (f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт.\n"
                 f"Производитель: {self.country}, прорастание: {self.germination_period} дней, цвет: {self.color}")
 
 
-class Category:
+class AbstractCategory(ABC):
+    """Абстрактный класс для категорий и заказов"""
+
+    @abstractmethod
+    def __init__(self, name: str, description: str):
+        self.name = name
+        self.description = description
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+
+class Category(AbstractCategory, ReprMixin):
     total_categories = 0
     total_unique_products = 0
 
     def __init__(self, name: str, description: str, products: list = None):
-        self.name = name
-        self.description = description
+        print(f"Создан объект: {self.__class__.__name__}('{name}', '{description}', {products})")
+
+        super().__init__(name, description)
         self.__products = products if products else []
         Category.total_categories += 1
         Category.total_unique_products = len(set(self.__products))
@@ -119,8 +182,30 @@ class Category:
         )
 
 
-class CategoryIterator:
+class Order(AbstractCategory, ReprMixin):
+    """Класс для заказа (дополнительное задание)"""
+
+    def __init__(self, name: str, description: str, product: Product, quantity: int):
+        print(f"Создан объект: {self.__class__.__name__}('{name}', '{description}', {product}, {quantity})")
+
+        super().__init__(name, description)
+        self.product = product
+        self.quantity = quantity
+        self.total_price = product.price * quantity
+
+    def __str__(self) -> str:
+        return (f"Заказ: {self.name}\n"
+                f"Товар: {self.product.name}\n"
+                f"Количество: {self.quantity} шт.\n"
+                f"Итоговая стоимость: {self.total_price} руб.")
+
+    def __len__(self) -> int:
+        return self.quantity
+
+
+class CategoryIterator(ReprMixin):
     def __init__(self, category):
+        print(f"Создан объект: {self.__class__.__name__}({category})")
         self._category = category
         self._index = 0
 
